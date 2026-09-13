@@ -59,15 +59,10 @@ st.write("Enter a suspicious IP address below to query live reputation metrics f
 user_ip = st.text_input("Enter a suspicious IP address:", placeholder="e.g., 8.8.8.8")
 
 # Replaces standard script execution with an interactive button trigger
-if st.button("Run Threat Scan"):
-    # ❌ Change this old code:
-# scan_suspicious_ip(user_ip)
-
-# ✅ Replace it with this safe code:
+# ✅ The correct code with perfect indentation spacing
 if user_ip.strip():
     response = scan_suspicious_ip(user_ip)
     
-    # Optional: Display your results safely here
     if response.status_code == 200:
         st.success("Scan complete!")
         st.json(response.json())
@@ -75,3 +70,5 @@ if user_ip.strip():
         st.error(f"Error from VirusTotal: {response.status_code}")
 else:
     st.info("Please enter an IP address above to start the scan.")
+
+
