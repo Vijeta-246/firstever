@@ -5,10 +5,10 @@ import requests
 # (Do NOT paste your raw API key string here anymore)
 API_KEY = st.secrets["VIRUSTOTAL_API_KEY"]
 
+# ✅ The correct code with proper indentation
 def scan_suspicious_ip(ip_address):
-    # ✅ The correct line with the explicit trailing slash:
-base_url = "https://virustotal.com"
-full_url = f"{base_url}{str(ip_address).strip()}"
+    base_url = "https://virustotal.com"
+    full_url = f"{base_url}{str(ip_address).strip()}"
 
     headers = {
         "x-apikey": API_KEY
