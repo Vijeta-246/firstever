@@ -6,20 +6,23 @@ import requests
 API_KEY = st.secrets["VIRUSTOTAL_API_KEY"]
 
 def scan_suspicious_ip(ip_address):
-    # ❌ If your line looks like this, it causes a 404:
-    # base_url = "https://virustotal.com" 
+    # ✅ Make sure 'https://' is at the very beginning of the string
+    base_url = "https://virustotal.com"
     
-    # ✅ Change it to this exact V3 API path:
-    base_url = "https://virustotal.comapi/v3/ip_addresses/"
+    # Clean the IP and combine it into a perfect web address
+    clean_ip = str(ip_address).strip()
+    full_url = f"{base_url}{clean_ip}"
     
-    full_url = f"{base_url}{str(ip_address).strip()}"
-
-    
-    # 📥 ADD THE NEW CODE RIGHT HERE:
+    # Your VirusTotal authentication headers
     headers = {
         "accept": "application/json",
         "x-apikey": "YOUR_ACTUAL_VIRUSTOTAL_API_KEY"
     }
+    
+    # Send the request securely
+    response = requests.get(full_url, headers=headers)
+    return response
+
     
     # Update your request line to look like this:
     response = requests.get(full_url, headers=headers)
