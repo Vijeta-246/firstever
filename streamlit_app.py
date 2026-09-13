@@ -3,8 +3,7 @@ import requests
 
 # SECURE: Fetch the API key safely from Streamlit's environment secrets
 # (Do NOT paste your raw API key string here anymore)
-API_KEY = st.secrets[VIRUSTOTAL_API_KEY = "94f45f98c7b04bbdd9b5d6039b1f0acba747192c422a6017123cb22efe090748"
-]
+API_KEY = st.secrets["VIRUSTOTAL_API_KEY"]
 
 def scan_suspicious_ip(ip_address):
     base_url = "https://virustotal.com"
