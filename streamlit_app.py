@@ -7,18 +7,24 @@ API_KEY = st.secrets["VIRUSTOTAL_API_KEY"]
 def scan_suspicious_ip(ip_address):
     # PERMANENT FIX: Using the global API endpoint with an explicit timeout 
     # to prevent Streamlit Cloud server routing freezes
-    base_url = "https://virustotal.com"
-    full_url = base_url + str(ip_address).strip()
+    #  RIGHT: Notice the "/" at the very end of the string
+    #  RIGHT: Notice the "/" at the very end of the string
+  base_url = "https://virustotal.com"  
+  full_url = f"https://virustotal.com{str(ip_address).strip()}"
+
+
+
+
     
-    headers = {
+headers = {
         "x-apikey": API_KEY,
         "Accept": "application/json"
     }
     
     # Visual status indicator inside the app
-    status_box = st.info(f"🔄 Connecting to VirusTotal... Scanning IP: {ip_address}")
+status_box = st.info(f"🔄 Connecting to VirusTotal... Scanning IP: {ip_address}")
     
-    try:
+try:
         # Added a 10-second timeout to handle slow cloud server proxies
         response = requests.get(full_url, headers=headers, timeout=10)
         
