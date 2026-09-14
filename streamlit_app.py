@@ -47,10 +47,10 @@ try:
         else:
             st.error(f"🌐 Cloud network routing failed. Status Code: {response.status_code}")
 
-    except requests.exceptions.Timeout:
+except requests.exceptions.Timeout:
         status_box.empty()
         st.error("⏱️ Connection Timed Out. The cloud server took too long to reach VirusTotal. Try running the scan again.")
-    except Exception as e:
+except Exception as e:
         status_box.empty()
         st.error(f"❌ An unexpected error occurred: {e}")
 
