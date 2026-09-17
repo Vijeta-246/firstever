@@ -23,12 +23,7 @@ def get_risk_badge(malicious_count):
         st.success("✅ **RISK STATUS: CLEAN / SAFE** (No security engines flagged this target address)")
 
 def execute_vt_scan(full_url, target_type, display_name):
-    """Handles the actual network request and display layout cleanly."""
-    
-    # ULTIMATE SAFETY CHECKER: If the slash is missing due to any logic error, manually fix it here
-    if "virustotal.comapi" in full_url or "virustotal.com8" in full_url:
-        full_url = full_url.replace("virustotal.com", "https://virustotal.com")
-
+    """Handles the network request and display layout without complex string replacements."""
     headers = {
         "x-apikey": API_KEY,
         "accept": "application/json"
@@ -37,7 +32,7 @@ def execute_vt_scan(full_url, target_type, display_name):
     status_box = st.info(f"🔄 Querying VirusTotal database for {target_type}: `{display_name}`...")
     
     try:
-        # Fixed 12-second timeout to handle proxy lags cleanly
+        # 12-second timeout to handle proxy lags cleanly
         response = requests.get(full_url, headers=headers, timeout=12)
         status_box.empty()
         
@@ -109,13 +104,13 @@ def execute_vt_scan(full_url, target_type, display_name):
 
     except requests.exceptions.Timeout:
         status_box.empty()
-        st.error("⏱️ **Proxy Timeout Encountered.** The server took too long handling the backend socket thread. Resubmit.")
+        st.error("⏱️ **Proxy Timeout Encountered.** The server took too long handling the network packet thread. Resubmit.")
     except Exception as e:
         status_box.empty()
         st.error(f"❌ **Unexpected script error condition:** {e}")
 
 # --- Front End Layout View ---
-st.title("🛡️ Automated Threat Intelligence Analysis Engine")
+st.title("🛡️ Universal Threat Intelligence Analysis Engine")
 st.write("Perform automated indicators-of-compromise (IoC) evaluation on network endpoints or URLs instantly.")
 
 # Create clear UI Tabs for the distinct scan operations
@@ -125,8 +120,8 @@ with tab1:
     user_ip = st.text_input("Enter a target server IP address to evaluate:", placeholder="e.g., 8.8.8.8", key="ip_input_field")
     if user_ip:
         clean_ip = user_ip.strip()
-        # FIXED EXPLICIT PATH: Hardcoded correctly
-        target_url = f"https://virustotal.com ip_addresses/{clean_ip}"
+        # Direct, hardcoded string construction without any hidden character manipulation
+        target_url = "https://virustotal.com" + clean_ip
         execute_vt_scan(target_url, "IP Address", clean_ip)
 
 with tab2:
@@ -136,7 +131,7 @@ with tab2:
         if "://" in clean_url:
             clean_url = clean_url.split("://")[-1]
         
-        # Safe URL encoding translation matching strict v3 specifications
+        # Clean safe URL translation matching strict v3 specifications
         encoded_url = base64.urlsafe_b64encode(clean_url.encode()).decode().strip("=")
-        target_url = f"https://virustotal.comurls/{encoded_url}"
+        target_url = "https://virustotal.com" + encoded_url
         execute_vt_scan(target_url, "URL/Domain", clean_url)
