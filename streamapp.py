@@ -5,7 +5,7 @@ import socket
 
 # Page Setup
 st.set_page_config(page_title="Threat Intel Scanner", page_icon="🛡️")
-st.title("🛡️ Automated Threat Intelligence")
+st.title("🛡️ Automated Threat Intelligence Web IP Scanner")
 st.subheader("⚡ Real-Time Cyber Security Tool")
 
 st.write("Type any network IP address down below to check if it is safe, suspicious, or dangerous to use.")
