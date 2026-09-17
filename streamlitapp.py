@@ -55,11 +55,11 @@ def scan_suspicious_ip(ip_address):
             with col1:
                 st.metric(label="🚨 Dangerous", value=malicious)
             with col2:
-                st.metric(label="⚠️ Unsafe", value=stats.get('suspicious', 0))
+                st.metric(label="⚠️ Suspicious", value=stats.get('suspicious', 0))
             with col3:
-                st.metric(label="🛡️ Safe / Good", value=stats.get('harmless', 0))
+                st.metric(label="🛡️ Harmless", value=stats.get('harmless', 0))
             with col4:
-                st.metric(label="⚪ Not Checked", value=stats.get('undetected', 0))
+                st.metric(label="⚪ Undetected", value=stats.get('undetected', 0))
             
             # Extracting Network & Regional Info
             as_owner = attributes.get('as_owner', 'Unknown Provider')
@@ -108,7 +108,7 @@ def scan_suspicious_ip(ip_address):
         st.error(f"❌ **An unexpected issue occurred:** {e}")
 
 # --- Front End Layout View (Easy Words) ---
-st.title("🛡️ Simple IP Safety Scanner")
+st.title("🛡️ Automated Threat Intelligence Web IP Scanner")
 st.write("Type any network IP address down below to check if it is safe, suspicious, or dangerous to use.")
 
 user_ip = st.text_input("Enter the IP address you want to check:", placeholder="e.g., 8.8.8.8")
