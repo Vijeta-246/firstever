@@ -2,8 +2,8 @@ import streamlit as st
 import requests
 
 # Page Setup
-st.set_page_config(page_title="Threat Intelligence Scanner", page_icon="🛡️")
-st.title("🛡️ Automated Threat Intelligence Web IP Scanner")
+st.set_page_config(page_title="Threat Intel Scanner", page_icon="🛡️")
+st.title("🛡️ Automated Threat Intelligence")
 st.subheader("⚡ Real-Time Cyber Security Tool")
 
 st.write("Type any network IP address down below to check if it is safe, suspicious, or dangerous to use.")
@@ -12,7 +12,7 @@ st.write("Type any network IP address down below to check if it is safe, suspici
 api_key = st.text_input("Enter VirusTotal API Key:", type="password")
 ip_address = st.text_input("Enter the IP address you want to check:", placeholder="e.g., 45.225.118.186")
 
-# FIX: Explicit step-by-step input validation to prevent blank logic states
+# Explicit step-by-step input validation to prevent blank logic states
 if not api_key:
     st.info("🔑 Please enter your VirusTotal API key above to activate the scanner.")
 elif not ip_address:
@@ -21,7 +21,8 @@ else:
     # This block only runs when BOTH fields are completely valid
     cleaned_ip = ip_address.strip()
     
-    url = f"https://virustotal.com{cleaned_ip}"
+    # ⚠️ FIXED ENDPOINT URL CONSTRUCTION (Guarantees no domain smashing)
+    url = f"https://virustotal.com/{cleaned_ip}"
     headers = {"accept": "application/json", "x-apikey": api_key}
     
     try:
@@ -90,4 +91,4 @@ else:
             st.error(f"❌ Server Error: Received unexpected status code {response.status_code} from VirusTotal.")
             
     except requests.exceptions.RequestException as e:
-        st.error(f"🌐 Connection issue occurred: Could not reach target network endpoints. Details: {e}")
+        st.error(f"🌐 Connection issue occurred. Technical Details: {e}")
