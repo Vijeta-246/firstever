@@ -31,7 +31,6 @@ def is_valid_ip(input_string):
 def scan_target(user_input):
     raw_input = user_input.strip()
     
-    # --- FIXED & IMPROVED URL ROUTER ---
     # Automatically distinguishes between an IP block and a website domain string
     if is_valid_ip(raw_input):
         target_type = "IP Address"
@@ -112,7 +111,7 @@ def scan_target(user_input):
                 mime="text/markdown"
             )
                 
-        # --- FIXED SYNTAX ERROR: Passed explicit error tuple codes ---
+        # --- FIXED SYNTAX ERROR: Explicit sequence provided ---
         elif response.status_code in:
             st.error("🔑 **Authentication Failed.** Confirm that your configured Streamlit Secrets API token string is correct.")
         elif response.status_code == 404:
@@ -133,7 +132,6 @@ def scan_target(user_input):
 st.title("🛡️ Automated Threat Intelligence Analysis Engine")
 st.write("Perform automated indicators-of-compromise (IoC) evaluation on network endpoints or URLs instantly.")
 
-# Visual adjustments for clarity
 user_input = st.text_input("Enter a target server IP address or Website URL to evaluate:", placeholder="e.g., 8.8.8.8 or https://example.com")
 
 if user_input:
