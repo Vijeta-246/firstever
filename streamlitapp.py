@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 import json
 import base64
-import re
 
 # Set up page configurations
 st.set_page_config(page_title="Universal Threat Intelligence Scanner", page_icon="🛡️", layout="centered")
@@ -24,22 +23,39 @@ def get_risk_badge(malicious_count):
         st.success("✅ **RISK STATUS: CLEAN / SAFE** (No security engines flagged this target address)")
 
 def is_valid_ip(input_string):
-    """Uses regex to check if the user entered a standard IPv4 address configuration."""
-    cleaned = input_string.strip()
-    return bool(re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\$", cleaned))
+    """
+    Fixed IP Checker: Reliably splits by dots and validates numbers
+    without relying on broken regex strings.
+    """
+    parts = input_string.strip().split('.')
+    if len(parts) != 4:
+        return False
+    for part in parts:
+        if not part.isdigit():
+            return False
+        num = int(part)
+        if num < 0 or num > 255:
+            return False
+    return True
 
 def scan_target(user_input):
     raw_input = user_input.strip()
-    
-    # Automatically distinguishes between an IP block and a website domain string
+    if not raw_input:
+        return
+        
+    # --- FIXED ROUTING LOGIC ---
     if is_valid_ip(raw_input):
         target_type = "IP Address"
         full_url = f"https://virustotal.com{raw_input}"
     else:
         target_type = "URL/Domain"
-        # VirusTotal V3 endpoints require incoming target URLs to be converted into 
-        # an unpadded Base64 encoded alphanumeric string to avoid breaking HTTP headers.
-        encoded_url = base64.urlsafe_b64encode(raw_input.encode()).decode().strip("=")
+        # Clean potential http prefixes from raw domains if users type them out
+        clean_url = raw_input
+        if "://" in clean_url:
+            clean_url = clean_url.split("://")[-1]
+            
+        # VirusTotal V3 endpoints require target URLs to be converted into an unpadded Base64 encoded alphanumeric string
+        encoded_url = base64.urlsafe_b64encode(clean_url.encode()).decode().strip("=")
         full_url = f"https://virustotal.com{encoded_url}"
     
     headers = {
@@ -111,7 +127,6 @@ def scan_target(user_input):
                 mime="text/markdown"
             )
                 
-        # --- ROBUST EXPLICT CONDITION REPLACING THE BROKEN IN OPERATOR ---
         elif response.status_code == 401 or response.status_code == 403:
             st.error("🔑 **Authentication Failed.** Confirm that your configured Streamlit Secrets API token string is correct.")
         elif response.status_code == 404:
@@ -132,7 +147,7 @@ def scan_target(user_input):
 st.title("🛡️ Automated Threat Intelligence Analysis Engine")
 st.write("Perform automated indicators-of-compromise (IoC) evaluation on network endpoints or URLs instantly.")
 
-user_input = st.text_input("Enter a target server IP address or Website URL to evaluate:", placeholder="e.g., 8.8.8.8 or https://example.com")
+user_input = st.text_input("Enter a target server IP address or Website URL to evaluate:", placeholder="e.g., 8.8.8.8 or google.com")
 
 if user_input:
     scan_target(user_input)
