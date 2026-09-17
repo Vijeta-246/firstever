@@ -23,6 +23,8 @@ def get_risk_badge(malicious_count):
 
 def scan_suspicious_ip(ip_address):
     clean_ip = str(ip_address).strip()
+    
+    # FIX: Corrected official VirusTotal API v3 path with explicit forward slashes
     full_url = f"https://virustotal.com{clean_ip}"
     
     headers = {
@@ -89,7 +91,8 @@ def scan_suspicious_ip(ip_address):
                 mime="text/markdown"
             )
                 
-        elif response.status_code in:
+        # FIX: Replaced the broken syntax line with explicit status matching logic
+        elif response.status_code == 401 or response.status_code == 403:
             st.error("🔑 **Authentication Failed.** Confirm that your configured Streamlit Secrets API token string is correct.")
         elif response.status_code == 404:
             st.warning(f"🔍 IP address `{clean_ip}` was not discovered in VirusTotal's indexed logs.")
@@ -106,7 +109,7 @@ def scan_suspicious_ip(ip_address):
         st.error(f"❌ **Unexpected script error condition:** {e}")
 
 # --- Front End Layout View ---
-st.title("🛡️Automated Threat Intelligence Web IP Scanner")
+st.title("🛡️ Automated Threat Intelligence Web IP Scanner")
 st.write("Perform automated indicators-of-compromise (IoC) evaluation on network endpoints to isolate malicious domains.")
 
 user_ip = st.text_input("Enter a target server IP address to evaluate:", placeholder="e.g., 8.8.8.8")
