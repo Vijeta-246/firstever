@@ -23,7 +23,12 @@ def get_risk_badge(malicious_count):
         st.success("✅ **RISK STATUS: CLEAN / SAFE** (No security engines flagged this target address)")
 
 def execute_vt_scan(full_url, target_type, display_name):
-    """Handles the actual network request and display layout to prevent redundant code."""
+    """Handles the actual network request and display layout cleanly."""
+    
+    # ULTIMATE SAFETY CHECKER: If the slash is missing due to any logic error, manually fix it here
+    if "virustotal.comapi" in full_url or "virustotal.com8" in full_url:
+        full_url = full_url.replace("virustotal.com", "https://virustotal.com")
+
     headers = {
         "x-apikey": API_KEY,
         "accept": "application/json"
@@ -120,12 +125,12 @@ with tab1:
     user_ip = st.text_input("Enter a target server IP address to evaluate:", placeholder="e.g., 8.8.8.8", key="ip_input_field")
     if user_ip:
         clean_ip = user_ip.strip()
-        # Explicitly hardcoded base path structure with definitive boundary trailing slash
-        target_url = f"https://virustotal.com{clean_ip}"
+        # FIXED EXPLICIT PATH: Hardcoded correctly
+        target_url = f"https://virustotal.com ip_addresses/{clean_ip}"
         execute_vt_scan(target_url, "IP Address", clean_ip)
 
 with tab2:
-    user_url = st.text_input("Enter a target Website URL to evaluate:", placeholder="e.g., google.com or http://example.com", key="url_input_field")
+    user_url = st.text_input("Enter a target Website URL to evaluate:", placeholder="e.g., google.com", key="url_input_field")
     if user_url:
         clean_url = user_url.strip()
         if "://" in clean_url:
@@ -133,5 +138,5 @@ with tab2:
         
         # Safe URL encoding translation matching strict v3 specifications
         encoded_url = base64.urlsafe_b64encode(clean_url.encode()).decode().strip("=")
-        target_url = f"https://virustotal.com{encoded_url}"
+        target_url = f"https://virustotal.comurls/{encoded_url}"
         execute_vt_scan(target_url, "URL/Domain", clean_url)
