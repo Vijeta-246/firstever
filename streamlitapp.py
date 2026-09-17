@@ -110,7 +110,7 @@ def execute_vt_scan(full_url, target_type, display_name):
         st.error(f"❌ **Unexpected script error condition:** {e}")
 
 # --- Front End Layout View ---
-st.title("🛡️ Universal Threat Intelligence Analysis Engine")
+st.title("🛡️ Automated Threat Intelligence Analysis Engine")
 st.write("Perform automated indicators-of-compromise (IoC) evaluation on network endpoints or URLs instantly.")
 
 # Create clear UI Tabs for the distinct scan operations
