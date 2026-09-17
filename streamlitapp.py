@@ -1,10 +1,9 @@
 import streamlit as st
 import requests
 import json
-import base64
 
 # Set up page configurations
-st.set_page_config(page_title="Universal Threat Intelligence Scanner", page_icon="🛡️", layout="centered")
+st.set_page_config(page_title="Advanced Threat Intelligence Scanner", page_icon="🛡️", layout="centered")
 
 # Retrieve the API key safely from Streamlit's secrets
 try:
@@ -16,20 +15,22 @@ except KeyError:
 def get_risk_badge(malicious_count):
     """Determines risk tiers and prints semantic alert badges."""
     if malicious_count > 10:
-        st.error(f"🚨 **RISK STATUS: HIGHLY DANGEROUS** ({malicious_count} security engines flagged this target)")
+        st.error("🚨 **RISK STATUS: HIGHLY DANGEROUS** (This IP is associated with known malicious activity)")
     elif 1 <= malicious_count <= 10:
-        st.warning(f"⚠️ **RISK STATUS: SUSPICIOUS** ({malicious_count} security engines flagged this target)")
+        st.warning("⚠️ **RISK STATUS: SUSPICIOUS** (Potential threat detected by a limited subset of engine scanners)")
     else:
-        st.success("✅ **RISK STATUS: CLEAN / SAFE** (No security engines flagged this target address)")
+        st.success("✅ **RISK STATUS: CLEAN / SAFE** (No security engines flagged this IP address)")
 
-def execute_vt_scan(full_url, target_type, display_name):
-    """Handles the network request and display layout without complex string replacements."""
+def scan_suspicious_ip(ip_address):
+    clean_ip = str(ip_address).strip()
+    full_url = f"https://virustotal.com{clean_ip}"
+    
     headers = {
         "x-apikey": API_KEY,
         "accept": "application/json"
     }
     
-    status_box = st.info(f"🔄 Querying VirusTotal database for {target_type}: `{display_name}`...")
+    status_box = st.info(f"🔄 Querying VirusTotal database for IP: `{clean_ip}`...")
     
     try:
         # 12-second timeout to handle proxy lags cleanly
@@ -42,7 +43,7 @@ def execute_vt_scan(full_url, target_type, display_name):
             stats = attributes.get('last_analysis_stats', {})
             malicious = stats.get('malicious', 0)
             
-            st.success(f"📊 Assessment Completed for {target_type}: `{display_name}`")
+            st.success(f"📊 Assessment Completed for: `{clean_ip}`")
             
             # --- RISK BADGE SUMMARY ---
             get_risk_badge(malicious)
@@ -58,29 +59,24 @@ def execute_vt_scan(full_url, target_type, display_name):
             with col4:
                 st.metric(label="⚪ Undetected", value=stats.get('undetected', 0))
             
-            # --- DETAILS LAYOUT ---
-            st.markdown("### 🏢 Infrastructure Profile")
-            if target_type == "IP Address":
-                as_owner = attributes.get('as_owner', 'Unknown Provider')
-                country = attributes.get('country', 'Unknown Country')
-                st.write(f"* **Network Autonomous System (ASN):** `{as_owner}`")
-                st.write(f"* **Country Registry:** `{country}`")
-            else:
-                title = attributes.get('title', 'No Site Title Registered')
-                categories = attributes.get('categories', {})
-                category_str = ", ".join(categories.values()) if categories else "Uncategorized"
-                st.write(f"* **HTML Page Title:** `{title}`")
-                st.write(f"* **Content Categories:** `{category_str}`")
-
+            # Extracting Network & Regional Info
+            as_owner = attributes.get('as_owner', 'Unknown Provider')
+            country = attributes.get('country', 'Unknown Country')
             reputation = attributes.get('reputation', 0)
+            
+            # --- TEXT DETAILS LAYOUT ---
+            st.markdown("### 🏢 Infrastructure Profile")
+            st.write(f"* **Network Autonomous System (ASN):** `{as_owner}`")
+            st.write(f"* **Country Registry:** `{country}`")
             st.write(f"* **Global Trust Reputation Score:** `{reputation}` points")
             
             # --- DOWNLOADABLE SCAN DATA REPORT ---
             st.markdown("### 📥 Threat Record Export")
             report_content = (
                 f"### Threat Intel Scan Report\n"
-                f"- **Target Type Verified:** {target_type}\n"
-                f"- **Scanned Target:** {display_name}\n"
+                f"- **Target IP Address:** {clean_ip}\n"
+                f"- **ISP/Host Owner:** {as_owner}\n"
+                f"- **Country Registry:** {country}\n"
                 f"- **Malicious Flags Total:** {malicious}\n"
                 f"- **Full Intelligence JSON Block:**\n\n```json\n"
                 f"{json.dumps(raw_data, indent=2)}\n```"
@@ -89,14 +85,14 @@ def execute_vt_scan(full_url, target_type, display_name):
             st.download_button(
                 label="📥 Download Markdown Scan Report (.md)",
                 data=report_content,
-                file_name=f"VT_{target_type.replace(' ', '_')}_{display_name}.md",
+                file_name=f"VT_Report_{clean_ip}.md",
                 mime="text/markdown"
             )
                 
-        elif response.status_code == 401 or response.status_code == 403:
+        elif response.status_code in:
             st.error("🔑 **Authentication Failed.** Confirm that your configured Streamlit Secrets API token string is correct.")
         elif response.status_code == 404:
-            st.warning(f"🔍 The {target_type} `{display_name}` was not discovered in VirusTotal's indexed logs.")
+            st.warning(f"🔍 IP address `{clean_ip}` was not discovered in VirusTotal's indexed logs.")
         elif response.status_code == 429:
             st.error("⏱️ **API Volumetric Cap Hit.** Standard evaluation keys are limited to 4 lookups per minute.")
         else:
@@ -104,34 +100,16 @@ def execute_vt_scan(full_url, target_type, display_name):
 
     except requests.exceptions.Timeout:
         status_box.empty()
-        st.error("⏱️ **Proxy Timeout Encountered.** The server took too long handling the network packet thread. Resubmit.")
+        st.error("⏱️ **Proxy Timeout Encountered.** The server took too long handling the backend socket thread. Resubmit.")
     except Exception as e:
         status_box.empty()
         st.error(f"❌ **Unexpected script error condition:** {e}")
 
 # --- Front End Layout View ---
-st.title("🛡️ Automated Threat Intelligence Analysis Engine")
-st.write("Perform automated indicators-of-compromise (IoC) evaluation on network endpoints or URLs instantly.")
+st.title("🛡️Automated Threat Intelligence Web IP Scanner")
+st.write("Perform automated indicators-of-compromise (IoC) evaluation on network endpoints to isolate malicious domains.")
 
-# Create clear UI Tabs for the distinct scan operations
-tab1, tab2 = st.tabs(["🌐 Scan IP Address", "🔗 Scan Website URL"])
+user_ip = st.text_input("Enter a target server IP address to evaluate:", placeholder="e.g., 8.8.8.8")
 
-with tab1:
-    user_ip = st.text_input("Enter a target server IP address to evaluate:", placeholder="e.g., 8.8.8.8", key="ip_input_field")
-    if user_ip:
-        clean_ip = user_ip.strip()
-        # Direct, hardcoded string construction without any hidden character manipulation
-        target_url = "https://virustotal.com" + clean_ip
-        execute_vt_scan(target_url, "IP Address", clean_ip)
-
-with tab2:
-    user_url = st.text_input("Enter a target Website URL to evaluate:", placeholder="e.g., google.com", key="url_input_field")
-    if user_url:
-        clean_url = user_url.strip()
-        if "://" in clean_url:
-            clean_url = clean_url.split("://")[-1]
-        
-        # Clean safe URL translation matching strict v3 specifications
-        encoded_url = base64.urlsafe_b64encode(clean_url.encode()).decode().strip("=")
-        target_url = "https://virustotal.com" + encoded_url
-        execute_vt_scan(target_url, "URL/Domain", clean_url)
+if user_ip:
+    scan_suspicious_ip(user_ip)
