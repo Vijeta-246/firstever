@@ -56,7 +56,7 @@ else:
     # --- PUBLIC IP HANDLING ---
     else:
         # NOTICE THE EXPLICIT FORWARD SLASH BEFORE THE CURLY BRACKETS
-        url = f"https://virustotal.com{cleaned_ip}"
+        url = f"https://virustotal.com/{cleaned_ip}"
         headers = {"accept": "application/json", "x-apikey": api_key}
         
         try:
