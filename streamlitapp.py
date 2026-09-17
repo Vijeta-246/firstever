@@ -22,51 +22,17 @@ def get_risk_badge(malicious_count):
     else:
         st.success("✅ **RISK STATUS: CLEAN / SAFE** (No security engines flagged this target address)")
 
-def is_valid_ip(input_string):
-    """
-    Fixed IP Checker: Reliably splits by dots and validates numbers
-    without relying on broken regex strings.
-    """
-    parts = input_string.strip().split('.')
-    if len(parts) != 4:
-        return False
-    for part in parts:
-        if not part.isdigit():
-            return False
-        num = int(part)
-        if num < 0 or num > 255:
-            return False
-    return True
-
-def scan_target(user_input):
-    raw_input = user_input.strip()
-    if not raw_input:
-        return
-        
-    # --- FIXED ROUTING LOGIC ---
-    if is_valid_ip(raw_input):
-        target_type = "IP Address"
-        full_url = f"https://virustotal.com{raw_input}"
-    else:
-        target_type = "URL/Domain"
-        # Clean potential http prefixes from raw domains if users type them out
-        clean_url = raw_input
-        if "://" in clean_url:
-            clean_url = clean_url.split("://")[-1]
-            
-        # VirusTotal V3 endpoints require target URLs to be converted into an unpadded Base64 encoded alphanumeric string
-        encoded_url = base64.urlsafe_b64encode(clean_url.encode()).decode().strip("=")
-        full_url = f"https://virustotal.com{encoded_url}"
-    
+def execute_vt_scan(full_url, target_type, display_name):
+    """Handles the actual network request and display layout to prevent redundant code."""
     headers = {
         "x-apikey": API_KEY,
         "accept": "application/json"
     }
     
-    status_box = st.info(f"🔄 Querying VirusTotal database for {target_type}: `{raw_input}`...")
+    status_box = st.info(f"🔄 Querying VirusTotal database for {target_type}: `{display_name}`...")
     
     try:
-        # 12-second timeout to handle proxy lags cleanly
+        # Fixed 12-second timeout to handle proxy lags cleanly
         response = requests.get(full_url, headers=headers, timeout=12)
         status_box.empty()
         
@@ -76,7 +42,7 @@ def scan_target(user_input):
             stats = attributes.get('last_analysis_stats', {})
             malicious = stats.get('malicious', 0)
             
-            st.success(f"📊 Assessment Completed for {target_type}: `{raw_input}`")
+            st.success(f"📊 Assessment Completed for {target_type}: `{display_name}`")
             
             # --- RISK BADGE SUMMARY ---
             get_risk_badge(malicious)
@@ -92,7 +58,7 @@ def scan_target(user_input):
             with col4:
                 st.metric(label="⚪ Undetected", value=stats.get('undetected', 0))
             
-            # --- CONTEXT-AWARE DETAILS LAYOUT ---
+            # --- DETAILS LAYOUT ---
             st.markdown("### 🏢 Infrastructure Profile")
             if target_type == "IP Address":
                 as_owner = attributes.get('as_owner', 'Unknown Provider')
@@ -114,7 +80,7 @@ def scan_target(user_input):
             report_content = (
                 f"### Threat Intel Scan Report\n"
                 f"- **Target Type Verified:** {target_type}\n"
-                f"- **Scanned Target:** {raw_input}\n"
+                f"- **Scanned Target:** {display_name}\n"
                 f"- **Malicious Flags Total:** {malicious}\n"
                 f"- **Full Intelligence JSON Block:**\n\n```json\n"
                 f"{json.dumps(raw_data, indent=2)}\n```"
@@ -123,14 +89,14 @@ def scan_target(user_input):
             st.download_button(
                 label="📥 Download Markdown Scan Report (.md)",
                 data=report_content,
-                file_name=f"VT_{target_type.replace(' ', '_')}_{raw_input}.md",
+                file_name=f"VT_{target_type.replace(' ', '_')}_{display_name}.md",
                 mime="text/markdown"
             )
                 
         elif response.status_code == 401 or response.status_code == 403:
             st.error("🔑 **Authentication Failed.** Confirm that your configured Streamlit Secrets API token string is correct.")
         elif response.status_code == 404:
-            st.warning(f"🔍 The {target_type} `{raw_input}` was not discovered in VirusTotal's indexed logs.")
+            st.warning(f"🔍 The {target_type} `{display_name}` was not discovered in VirusTotal's indexed logs.")
         elif response.status_code == 429:
             st.error("⏱️ **API Volumetric Cap Hit.** Standard evaluation keys are limited to 4 lookups per minute.")
         else:
@@ -147,7 +113,25 @@ def scan_target(user_input):
 st.title("🛡️ Automated Threat Intelligence Analysis Engine")
 st.write("Perform automated indicators-of-compromise (IoC) evaluation on network endpoints or URLs instantly.")
 
-user_input = st.text_input("Enter a target server IP address or Website URL to evaluate:", placeholder="e.g., 8.8.8.8 or google.com")
+# Create clear UI Tabs for the distinct scan operations
+tab1, tab2 = st.tabs(["🌐 Scan IP Address", "🔗 Scan Website URL"])
 
-if user_input:
-    scan_target(user_input)
+with tab1:
+    user_ip = st.text_input("Enter a target server IP address to evaluate:", placeholder="e.g., 8.8.8.8", key="ip_input_field")
+    if user_ip:
+        clean_ip = user_ip.strip()
+        # Explicitly hardcoded base path structure with definitive boundary trailing slash
+        target_url = f"https://virustotal.com{clean_ip}"
+        execute_vt_scan(target_url, "IP Address", clean_ip)
+
+with tab2:
+    user_url = st.text_input("Enter a target Website URL to evaluate:", placeholder="e.g., google.com or http://example.com", key="url_input_field")
+    if user_url:
+        clean_url = user_url.strip()
+        if "://" in clean_url:
+            clean_url = clean_url.split("://")[-1]
+        
+        # Safe URL encoding translation matching strict v3 specifications
+        encoded_url = base64.urlsafe_b64encode(clean_url.encode()).decode().strip("=")
+        target_url = f"https://virustotal.com{encoded_url}"
+        execute_vt_scan(target_url, "URL/Domain", clean_url)
